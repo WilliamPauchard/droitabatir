@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html style="margin: 2%;background-color:#FFF8E9;">
+    <head>
+        <title>Droit à bâtir</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Bootstrap Core CSS -->
+		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    </head>
+	<nav class="navbar navbar-inverse">
+	  <div class="container-fluid">
+		<div class="navbar-header">
+		  <a class="navbar-brand" href="#">Droit à bâtir</a>
+		</div>
+		<ul class="nav navbar-nav">
+		  <li class="active"><a href="#">Accueil</a></li>
+		</ul>
+		<button onClick="getUser();" class="btn btn-danger navbar-btn">Connexion</button>
+		<input type="text" id="user_key" value="SC3A4TGCU2QBZU76KUCSZ2LXAEFHBTHAMHL4WUWIANU24IE5XPLTCE2D" />
+		<div style="color:white;" id="user_info"></div>
+	  </div>
+	  
+	</nav> 
+	<body style="background-color:white;border-radius:30px;margin-left:250px;margin-right:250px;">
+		
+		<div id="new_projet" style="display : none;">
+			<div class="container">
+			<img src="projets.png" alt="Projets" style="float:right;width:45%;">
+			<h3>Ajouter un nouveau projet</h3>
+			<form style="width:50%;"> 
+				<div class="form-group">
+					<input type="text" id="new_nom" class="form-control" placeholder="Projet" />
+				</div>
+				<div class="form-group">
+					<input type="text" id="new_description" class="form-control" placeholder="Description" />
+				</div>
+				<div class="form-group">
+					<input type="text" id="new_lieu" class="form-control" placeholder="Lieu" />
+				</div>
+				<div class="form-group">
+					<input type="text" id="new_annee" class="form-control" placeholder="Année fin de projet" />
+				</div>
+				<div class="form-group">
+					<input type="text" id="new_budget" class="form-control" placeholder="Budget" />
+				</div>
+				<button type="submit" class="btn btn-primary" onClick="addProjet();">Enregistrer</button>
+				<button type="submit" class="btn btn-danger" onClick="delProjet();">Supprimer</button>
+			</form>
+			</div>
+		</div>
+		<br/><br />
+		
+		<div class="container">
+		<h3>Liste des projets sur Genève</h3>
+		<table id="tableTerrains" class="table">
+		</table>
+		</div>
+		
+
+        <script>
+			var user = null;
+			
+			chargerProjets();
+			
+            function getUser() {
+                var user_secretkey = document.getElementById("user_key").value;
+                $.get("http://groups.cowaboo.net/2018/group09/public/api/user?secretKey=" + user_secretkey)
+                        .fail(function () {
+                            alert("secret_key invalide");
+                        })
+                        .done(function (reponse) {
+                            user = reponse;
+                            user.secretKey = user_secretkey;
+							$("#new_projet").fadeIn();
+                            $("#user_info").html("Utilisateur : " + user.email);
+                        });
+			}
+						
+			function chargerProjets() {
+				$("#tableTerrains").html("");
+				$.get("http://groups.cowaboo.net/2018/group09/public/api/tags", function (reponse) {
+					$.each(reponse.tag_list.list, function (key, value) {
+							var projet = chargerUnProjet(key);
+							$("#tableTerrains").append("<thead><tr><th>Projet</th><th>Description</th><th>Lieu</th><th>Annee</th><th>Budget</th></tr></thead><tr id='tr"+projet.dictionary.date +"'><td>" + projet.dictionary.id + "</td><td id='description"+projet.dictionary.date+"'></td><td id='lieu"+projet.dictionary.date+"'></td><td id='annee"+projet.dictionary.date+"'></td><td id='budget"+projet.dictionary.date+"'></td></tr>");
+							$.each(projet.dictionary.entries, function (key, value) {
+							    if (value.tags == "||Description||") $("#description"+projet.dictionary.date).append(value.value);
+								if (value.tags == "||Lieu||") $("#lieu"+projet.dictionary.date).append(value.value);
+								if (value.tags == "||Annee||") $("#annee"+projet.dictionary.date).append(value.value);
+								if (value.tags == "||Budget||") $("#budget"+projet.dictionary.date).append(value.value);
+							});
+					})
+				});
+            }
+			
+			function chargerUnProjet(key) {
+			    var projet = "";
+				$.ajax({
+					url: "http://groups.cowaboo.net/2018/group09/public/api/observatory?observatoryId=" + key,
+					async: false
+				}).done(function (reponse) {
+					projet = reponse;
+				});
+				return projet;
+			}
+			
+			function addProjet(){
+				var projet_nom = $("#new_nom").val();
+				var projet_description = $("#new_description").val();
+				var projet_lieu = $("#new_lieu").val();
+				var projet_annee = $("#new_annee").val();
+				var projet_budget = $("#new_budget").val();
+
+				$.post("http://groups.cowaboo.net/2018/group09/public/api/observatory", {
+					"secretKey": user.secretKey,
+					"observatoryId": projet_nom
+				}).done(function (reponse) { 
+					alert('les informations complémentaires peuvent mettre du temps à apparaître');
+					$.post("http://groups.cowaboo.net/2018/group09/public/api/entry", {
+						"secretKey": user.secretKey,
+						"observatoryId": projet_nom,
+						"tags" : "Description",
+						"value" : projet_description
+					});
+					$.post("http://groups.cowaboo.net/2018/group09/public/api/entry", {
+						"secretKey": user.secretKey,
+						"observatoryId": projet_nom,
+						"tags" : "Lieu",
+						"value" : projet_lieu
+					});
+					$.post("http://groups.cowaboo.net/2018/group09/public/api/entry", {
+						"secretKey": user.secretKey,
+						"observatoryId": projet_nom,
+						"tags" : "Annee",
+						"value" : projet_annee
+					});
+					$.post("http://groups.cowaboo.net/2018/group09/public/api/entry", {
+						"secretKey": user.secretKey,
+						"observatoryId": projet_nom,
+						"tags" : "Budget",
+						"value" : projet_budget
+					});
+					chargerProjets();
+				});
+			}
+			
+			function delProjet(){
+				var projet_nom = $("#new_nom").val();
+
+				$.delete("http://groups.cowaboo.net/2018/group09/public/api/observatory", {
+					"secretKey": user.secretKey,
+					"observatoryId": projet_nom
+				}).done(function (reponse) { 
+					$.delete("http://groups.cowaboo.net/2018/group09/public/api/observatory", {
+					"secretKey": user.secretKey,
+					"observatoryId": projet_nom
+					});
+					chargerProjets();
+				});
+			
+				$.delete = function(url, data, callback, type){
+	 
+				if ( $.isFunction(data) ){
+				type = type || callback,
+					callback = data,
+					data = {}
+				}
+				 
+				return $.ajax({
+					url: url,
+					type: 'DELETE',
+					success: callback,
+					data: data,
+					contentType: type
+				});
+				}
+			}	
+			
+        </script>
+    </body>
+</html>

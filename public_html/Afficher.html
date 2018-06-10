@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    </head>
+    <body>
+                <a href="#"  style="width : 100%;" onClick="getAllEvent();" class="button button-round">Charger utilisateur</a>
+                    <table id="event_info">
+            </table>
+                            <table id="event_created_info">
+            </table>
+
+<script>
+    function getAllEvent() {
+        $.get("http://groups.cowaboo.net/2018/group09/public/api/tags", function (reponse) {
+            $("#event_info").html("");
+            $("#event_created_info").html("");
+            $.each(reponse.tag_list.list, function (key, value) {
+                var event = getInfoEvent(key);
+                if ($.inArray(user.email, event.dictionary.member_list) < 0) {
+                    $("#event_info").append("<tr id='tr_allevent_" + event.dictionary.id + "' ><td>" + event.dictionary.id + "</td><td>" + event.dictionary.conf.date + "</td><td><a href='#' class='button button-raised color-green' onClick='subscribe(\"" + event.dictionary.id + "\")'>subscribe</a></td></tr>");
+                }
+                if (event.dictionary.author == user.email) {
+                    $("#event_created_info").append("<tr id='tr_myevent_" + event.dictionary.id + "' ><td>" + event.dictionary.id + "</td><td>" + event.dictionary.conf.date + "</td><td><div  onClick='openQRGrand(\"" + event.dictionary.id + "\")' id='qrcode" + event.dictionary.id + "'></div></td><td><a href='#' class='button button-raised color-red' onClick='deleteEvent(\""+event.dictionary.id+"\")'>delete</a></td></tr>");
+                    qrcode(event.dictionary.id);
+                }
+            })
+        });
+    }
+     function getInfoEvent(id_event) {
+        var event = "";
+        $.ajax({
+            url: "http://groups.cowaboo.net/2018/group09/public/api/observatory?observatoryId=" + id_event,
+            async: false
+        }).done(function (reponse) {
+            event = reponse;
+        });
+        return event;
+    }
+    </script>
+        </body>
+</html>
